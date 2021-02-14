@@ -25,7 +25,6 @@ var (
 
 func publish (topic string, channel chan Sample) {
     for sample := range channel {
-        fmt.Println("Publishing to", topic)
         message, _ := json.Marshal(sample)
         client.Publish(topic, 1, false, message)
     }
@@ -40,16 +39,12 @@ func ahum (channel_temp chan Sample,
            channel_rhum chan Sample,
            channel_ahum chan Sample) {
     for {
-        fmt.Println("a")
         temp_sample := <- channel_temp
-        fmt.Println("b")
         rhum_sample := <- channel_rhum
-        fmt.Println("c")
         
         temp := temp_sample.Value
         rhum := rhum_sample.Value
         ahum := calc_abs_hum(temp, rhum)
-        fmt.Println(temp, rhum, ahum)
         
         channel_ahum <- Sample{temp_sample.Time, ahum}
     }
@@ -61,7 +56,6 @@ func dispatch_sample (client mqtt.Client, message mqtt.Message) {
     var channel_temp chan Sample
     var channel_rhum chan Sample
     var channel_ahum chan Sample
-    fmt.Println("dispatch enter")
     
     // preprocess topic
     tparts := strings.Split(topic, "/")
@@ -90,7 +84,6 @@ func dispatch_sample (client mqtt.Client, message mqtt.Message) {
         case "rhum":
             channel = channel_rhum
         default:
-            fmt.Println("dispatch abnormal exit")
             return
         }
         
@@ -98,8 +91,6 @@ func dispatch_sample (client mqtt.Client, message mqtt.Message) {
         topic_temp := "siggen/"+strings.Join(tparts[1:len(tparts)-1], "/")+"/temp"
         topic_rhum := "siggen/"+strings.Join(tparts[1:len(tparts)-1], "/")+"/rhum"
         topic_ahum := "func/"  +strings.Join(tparts[1:len(tparts)-1], "/")+"/ahum"
-        
-        fmt.Println(topic_temp+" + "+topic_rhum+" => "+topic_ahum)
         
         go publish(topic_ahum, channel_ahum)
         go ahum(channel_temp, channel_rhum, channel_ahum)
@@ -110,7 +101,6 @@ func dispatch_sample (client mqtt.Client, message mqtt.Message) {
     
     // queue channel
     channel <- sample
-    fmt.Println("dispatch normal exit")
 }
 
 func mqtt_subscribe () {
