@@ -73,6 +73,7 @@ func dispatch_sample (client mqtt.Client, message mqtt.Message) {
     defer dispatch_mux.Unlock()
     channel, ok := dispatch[topic]
     if !ok {
+        // create necessary channels
         channel_temp = make(chan Sample, 2)
         channel_rhum = make(chan Sample, 2)
         channel_ahum = make(chan Sample, 2)
@@ -92,9 +93,11 @@ func dispatch_sample (client mqtt.Client, message mqtt.Message) {
         topic_rhum := "siggen/"+strings.Join(tparts[1:len(tparts)-1], "/")+"/rhum"
         topic_ahum := "func/"  +strings.Join(tparts[1:len(tparts)-1], "/")+"/ahum"
         
+        // start up consumers
         go publish(topic_ahum, channel_ahum)
         go ahum(channel_temp, channel_rhum, channel_ahum)
         
+        // register channels
         dispatch[topic_temp] = channel_temp
         dispatch[topic_rhum] = channel_rhum
     }
